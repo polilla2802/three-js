@@ -12,13 +12,15 @@ const scene = new THREE.Scene();
 // scene.background = new THREE.Color(0xf0f0f0);
 //Creating my main camera
 const camera = new THREE.PerspectiveCamera(
-  45,
+  75,
   window.innerWidth / window.innerHeight,
-  0.1,
+  1,
   1000
 );
 //Setting the camera by 5 away from the z axis
-camera.position.z = 5;
+camera.position.x = 10;
+camera.position.y = 10;
+camera.position.z = 10;
 //My main render over myCanvas
 const renderer = new THREE.WebGLRenderer({
   canvas: myCanvas,
@@ -36,110 +38,113 @@ window.addEventListener("resize", function () {
   camera.updateProjectionMatrix();
 });
 
+let screenWith = 5;
+let screenHeight = 3;
+let screenDepth = 3;
+
 //CUBE CODE //
-let cubeSize = 1;
 //Create a cube from the THREE library
-const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+const cubeContainerGeometry = new THREE.BoxGeometry(11, 7, 7);
+//Cube container
+const cubeContainerMaterial = new THREE.MeshBasicMaterial();
+cubeContainerMaterial.transparent = true;
+cubeContainerMaterial.opacity = 0.3;
+cubeContainerMaterial.color.setRGB(
+  0.571926611453039,
+  0.6284489644116682,
+  0.9028887551547664
+);
+console.log(cubeContainerMaterial.color);
+//Instance of my new cube container by creating a mesh
+const cubeContainer = new THREE.Mesh(
+  cubeContainerGeometry,
+  cubeContainerMaterial
+);
+scene.add(cubeContainer);
+//Create a cube from the THREE library
+const cubeGeometry = new THREE.BoxGeometry();
 //Select a basic material from the THREE library
 const cubeMaterial = new THREE.MeshBasicMaterial();
+//For 2d cube
+// cubeMaterial.side = THREE.DoubleSide;
 //Setting an initial random color for the material
-cubeMaterial.color.setRGB(
-  Math.random(100, 256),
-  Math.random(100, 256),
-  Math.random(100, 256)
-);
+function pickColor(params) {
+  cubeMaterial.color.setRGB(
+    Math.random(100, 256),
+    Math.random(100, 256),
+    Math.random(100, 256)
+  );
+}
+pickColor();
+
 //Instance of my new cube by creating a mesh
 const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
 //Initial position of cube
-// cube.position.x = 0;
-// cube.position.y = 0;
-let xSpeed = 3;
-let ySpeed = 3;
-cube.position.set(0 /*px*/, 0, -screenDepth + 20);
-cube.scale.set(100, 100, 100);
+
+let initialDirection = Math.random() < 0.5 ? 1 : -1;
+let x = Math.random() * screenWith * initialDirection;
+initialDirection = Math.random() < 0.5 ? 1 : -1;
+let y = Math.random() * screenHeight * initialDirection;
+initialDirection = Math.random() < 0.5 ? 1 : -1;
+let z = Math.random() * screenHeight * initialDirection;
+let xSpeed = 0.1;
+let ySpeed = 0.1;
+let zSpeed = 0.1;
+cube.position.x = x;
+cube.position.y = y;
+cube.position.z = z;
+// console.log("x: " + cube.position.x);
+// console.log("y: " + cube.position.y);
+// console.log("z: " + cube.position.z);
 //Adding my new cube to the scene
 scene.add(cube);
 
-const visibleHeightAtZDepth = (depth, camera) => {
-  // vertical fov in radians
-  const vFOV = (camera.fov * Math.PI) / 180;
+//Adding a grid to the scene for looking at the 2d axis
+const gridHelper = new THREE.GridHelper(7.6, 20);
+gridHelper.geometry.rotateX(Math.PI / 2);
+// gridHelper.geometry.rotateY(200);
+scene.add(gridHelper);
 
-  // Math.abs to ensure the result is always positive
-  return 2 * Math.tan(vFOV / 2) * Math.abs(depth);
-};
-
-var screenDepth;
-screenDepth = findScreenDepth(camera, renderer);
-
-cube.position.set(0 /*px*/, 0, -screenDepth + 20);
-
-function findScreenDepth(camera, renderer) {
-  const { near, far } = camera;
-  const { height: physicalViewHeight } = renderer.getDrawingBufferSize();
-  console.log(window.innerHeight, physicalViewHeight);
-  const threshold = 0.00000000000001;
-
-  return _findScreenDepth(near, far);
-
-  function _findScreenDepth(near, far) {
-    const midpoint = (far - near) / 2 + near;
-    const midpointHeight = visibleHeightAtZDepth(-midpoint, camera);
-
-    if (Math.abs(physicalViewHeight / midpointHeight - 1) <= threshold)
-      return midpoint;
-
-    if (physicalViewHeight < midpointHeight)
-      return _findScreenDepth(near, midpoint);
-    else if (physicalViewHeight > midpointHeight)
-      return _findScreenDepth(midpoint, far);
-    else if (midpointHeight == physicalViewHeight)
-      // almost never happens
-      return midpoint;
-  }
-}
-// //Adding a grid to the scene for looking at the 2d axis
-// const gridHelper = new THREE.GridHelper(7, 20);
-// gridHelper.geometry.rotateX(Math.PI / 2);
-// // gridHelper.geometry.rotateY(200);
-// scene.add(gridHelper);
-
-// //Adding controls to the mouse over the scene
-// const controls = new OrbitControls(camera, renderer.domElement);
+//Adding controls to the mouse over the scene
+const controls = new OrbitControls(camera, renderer.domElement);
 
 const animate = function () {
   requestAnimationFrame(animate);
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
-  cube.rotation.z += 0.01;
-  cube.position.x += xSpeed;
-  cube.position.y += ySpeed;
-  if (
-    cube.position.x - 50 <= -window.innerWidth / 2 + 50 ||
-    cube.position.x + 50 >= window.innerWidth / 2 - 50
-  ) {
-    cubeMaterial.color.setRGB(
-      Math.random(100, 256),
-      Math.random(100, 256),
-      Math.random(100, 256)
-    );
+  cube.rotation.x += 0.02;
+  cube.rotation.y += 0.02;
+  cube.rotation.z += 0.02;
+  cube.position.x += xSpeed * initialDirection;
+  cube.position.y += ySpeed * initialDirection;
+  cube.position.z += zSpeed * initialDirection;
+  if (cube.position.x >= screenWith) {
     xSpeed = -xSpeed;
-  } else if (
-    cube.position.y - 50 <= -window.innerHeight / 2 + 30 ||
-    cube.position.y + 50 >= window.innerHeight / 2 - 30
-  ) {
-    cubeMaterial.color.setRGB(
-      Math.random(100, 256),
-      Math.random(100, 256),
-      Math.random(100, 256)
-    );
-    ySpeed = -ySpeed;
+    cube.position.x = screenWith;
+    pickColor();
+  } else if (cube.position.x <= -screenWith) {
+    xSpeed = -xSpeed;
+    cube.position.x = -screenWith;
+    pickColor();
   }
-  // cube.position.x += xSpeed;
-  // cube.position.y += ySpeed;
-
-  // if (cube.position.x >= 4) {
-  //   xSpeed = -xSpeed;
-  // }
+  if (cube.position.y >= screenHeight) {
+    ySpeed = -ySpeed;
+    cube.position.y = screenHeight;
+    pickColor();
+  } else if (cube.position.y <= -screenHeight) {
+    ySpeed = -ySpeed;
+    cube.position.y = -screenHeight;
+    pickColor();
+  }
+  if (cube.position.z >= screenDepth) {
+    zSpeed = -zSpeed;
+    cube.position.z = screenDepth;
+    pickColor();
+  } else if (cube.position.z <= -screenDepth) {
+    zSpeed = -zSpeed;
+    cube.position.z = -screenDepth;
+    pickColor();
+  }
+  // console.log("x: " + cube.position.x);
+  // console.log("y: " + cube.position.y);
 
   renderer.render(scene, camera);
 };
