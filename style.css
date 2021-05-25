@@ -1,3 +1,10 @@
+body {
+  /* display: flex;
+  flex-direction: column;
+  justify-content: center; */
+  overflow: hidden;
+}
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -8,7 +15,7 @@
 }
 
 canvas {
-  position: fixed;
-  top: 0;
+  position: absolute;
   left: 0;
+  top: 0;
 }
